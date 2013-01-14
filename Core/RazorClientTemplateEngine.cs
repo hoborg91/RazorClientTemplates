@@ -46,19 +46,31 @@ namespace RazorClientTemplates
         {
             if (node == null) return;
 
-            // Ignore the @ symbol - that's Razor's business
-            if (node is TransitionSpan) return;
+            var blockNode = node as Block;
+            if (blockNode != null)
+            {
+                if (VisitBlock(blockNode, output)) return;
+            }
 
-            // Explicitly ignore @model and @inherits spans as part
-            // of the transition from static to dynamic typing
-            if (node is ModelSpan) return;
-            if (node is InheritsSpan) return;
-            if (node is MetaCodeSpan) return;
+            var spanNode = node as Span;
+            if (spanNode != null)
+            {
+                // Ignore the @ symbol - that's Razor's business
+                if (spanNode.Kind == SpanKind.Transition)
+                    return;
 
-            // Explicitly support these types of spans:
-            if (VisitBlock(node as Block, output)) return;
-            if (VisitMarkupSpan(node as MarkupSpan, output)) return;
-            if (VisitCodeSpan(node as CodeSpan, output)) return;
+                // Explicitly ignore @model and @inherits spans as part
+                // of the transition from static to dynamic typing
+                if (spanNode.Kind == SpanKind.MetaCode) return;
+
+                // Explicitly support these types of spans:
+                if (VisitMarkupSpan(
+                    spanNode,
+                    output)) return;
+                if (VisitCodeSpan(
+                    spanNode,
+                    output)) return;
+            }
 
             // Emit a warning for any span that wasn't handled above
             Trace.WriteLine(string.Format("Ignoring {0}...", node));
@@ -68,6 +80,9 @@ namespace RazorClientTemplates
         {
             if(block == null) return false;
 
+            if (block.Type == BlockType.Helper || block.Type == BlockType.Directive)
+                return false;
+
             foreach (var child in block.Children)
             {
                 ParseSyntaxTreeNode(child, output);
@@ -76,9 +91,9 @@ namespace RazorClientTemplates
             return true;
         }
 
-        protected virtual bool VisitMarkupSpan(MarkupSpan markup, TextWriter output)
+        protected virtual bool VisitMarkupSpan(Span markup, TextWriter output)
         {
-            if(markup == null) return false;
+            if(markup == null || markup.Kind != SpanKind.Markup) return false;
 
             var content = new StringBuilder(markup.Content);
             content.Replace("\"", "\\\"");
@@ -93,22 +108,11 @@ namespace RazorClientTemplates
             return true;
         }
 
-        protected virtual bool VisitCodeSpan(CodeSpan code, TextWriter output)
+        protected virtual bool VisitCodeSpan(Span code, TextWriter output)
         {
-            if (code == null) return false;
+            if (code == null || code.Kind != SpanKind.Code) return false;
 
-            if (code is HelperHeaderSpan)
-            {
-                // TODO: Helper support
-                Trace.WriteLine(string.Format("Ignoring {0} - Helpers not currently supported", code));
-                return true;
-            }
-            if (code is HelperFooterSpan)
-            {
-                return true;
-            }
-
-            if (code is ImplicitExpressionSpan)
+            if (code.Parent.Type==BlockType.Expression)
             {
                 output.Write("_buf.push(");
                 output.Write(code.Content);

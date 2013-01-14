@@ -54,9 +54,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Templates\Movie.cshtml">
+    <EmbeddedResource Include="Templates\Movie.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj">
