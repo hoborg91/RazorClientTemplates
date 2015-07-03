@@ -1,0 +1,83 @@
+﻿@using RazorClientTemplates
+@model IEnumerable<RazorClientTemplates.Website.Models.Movie>
+@{
+    ViewBag.Title = "My Movies";
+}
+
+<style>
+    #twitter-container { float: right; width: 400px; }
+    #twitter-feed { height: 700px; overflow-y: auto; }
+    #twitter-feed .tweet { clear: both; min-height: 60px; margin-bottom: 5px; }
+    #twitter-feed .tweet .username { font-weight: bold; }
+    #twitter-feed .tweet img { float: left; padding-right: 5px; }
+</style>
+
+<section id="movies" style="float: left; width: 60%; min-height: 500px; height: 100%;">
+    <h2>@ViewBag.Title</h2>
+    
+    @foreach(var movie in Model)
+    {
+        @Html.Partial("Movie", movie)
+    }
+
+    <div>
+        <button id="load-more">Load More Movies...</button>
+    </div>
+
+</section>
+
+<section id="twitter-container">
+    <h2>Tweets about "movies"</h2>
+    <div id="twitter-feed"></div>
+</section>
+
+<div style="clear: both;"></div>
+
+<!-- Inline Client Template -->
+<script type="text/javascript">
+    var movieClientTemplate = @Html.ClientTemplate("MovieTyped");
+
+    $(function() {
+        $('#load-more').click(function() {
+            $.ajax({
+                url: '@Url.Action("MoreMovies", "Home")',
+                success: function (movies) {
+                    var moviesContainer = $('#movies');
+                    $.each(movies, function (idx, movie) {
+                        var renderedTemplate = movieClientTemplate(movie);
+                        moviesContainer.append(renderedTemplate);
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+<!-- Script Resource Client Template -->
+<script src="@Url.ClientTemplate("Tweet", functionName: "TweetTemplate")" type="text/javascript"></script>
+<script type="text/javascript">
+    var query = {
+        q: "movies",
+        rpp: 10,
+        since_id: 0
+    };
+    
+    function loadTweets() {
+        var feed = $('#twitter-feed');
+
+        $.ajax('http://search.twitter.com/search.json', { data: query, dataType: "jsonp" })
+            .success(function(resp) {
+                query.since_id = resp.max_id;
+
+                $.each(resp.results, function(i, tweet) {
+                    var rendered = TweetTemplate(tweet);
+                    $(rendered).hide().prependTo(feed).show('fast');
+                });
+
+                setTimeout(loadTweets, 10000);
+            });
+    }
+
+
+    $(loadTweets);
+</script>

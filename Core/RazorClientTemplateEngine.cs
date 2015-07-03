@@ -10,6 +10,12 @@ namespace RazorClientTemplates
 {
     public class RazorClientTemplateEngine
     {
+		/// <summary>
+		/// Indicates that we have encountered structure like "@model MyType..." or "@inherits MyViewWebPage...".
+		/// Thus the rest of the line where "@model" or similar keyword is located must be trimmed.
+		/// </summary>
+		private bool _theRestOfTheLineMustBeTrimmed;
+
         public string RenderClientTemplate(string razorTemplate)
         {
             using(var writer = new StringWriter())
@@ -95,7 +101,16 @@ namespace RazorClientTemplates
         {
             if(markup == null || markup.Kind != SpanKind.Markup) return false;
 
-            var content = new StringBuilder(markup.Content);
+			// Treat "@model" keyword.
+			var markupContent = markup.Content;
+			if (_theRestOfTheLineMustBeTrimmed) {
+				markupContent = TrimModelType(markupContent);
+				_theRestOfTheLineMustBeTrimmed = false;
+			}
+
+			// Common behaviour is following.
+
+            var content = new StringBuilder(markupContent);
             content.Replace("\"", "\\\"");
             content.Replace("'", "\\'");
             content.Replace("\r", "\\r");
@@ -108,11 +123,30 @@ namespace RazorClientTemplates
             return true;
         }
 
+		/// <summary>
+		/// Trims the first line of the given markup. The purpose is to get rid of model type declaration.
+		/// The example: "@model MyType \r\n Hello world!". The given markup " MyType \r\n Hello world!" will
+		/// be turned into "\n Hello world!".
+		/// </summary>
+		/// <param name="markupContent">The markup to be trimmed.</param>
+		/// <returns></returns>
+		private string TrimModelType(string markupContent) {
+			return markupContent.Substring(markupContent.IndexOf('\n') + 1);
+		}
+
         protected virtual bool VisitCodeSpan(Span code, TextWriter output)
         {
             if (code == null || code.Kind != SpanKind.Code) return false;
 
-            if (code.Parent.Type==BlockType.Expression)
+			// Treat "@model" keyword.
+			if (code.Content == "model") {
+				_theRestOfTheLineMustBeTrimmed = true;
+				return true;
+			}
+
+			// Common behaviour is following.
+
+            if (code.Parent.Type == BlockType.Expression)
             {
                 output.Write("_buf.push(");
                 output.Write(code.Content);
