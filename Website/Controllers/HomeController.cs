@@ -6,7 +6,11 @@ namespace RazorClientTemplates.Website.Controllers
 {
     public class HomeController : Controller
     {
-		public IEnumerable<Movie> Movies() {
+		/// <summary>
+		/// Simple data to test.
+		/// </summary>
+		/// <returns></returns>
+		private IEnumerable<Movie> _movies() {
 			return new[] {
                 new Movie { 
                     Title = "The Big Lebowski",
@@ -31,14 +35,55 @@ namespace RazorClientTemplates.Website.Controllers
             };
 		}
 
+		/// <summary>
+		/// More simple data to test.
+		/// </summary>
+		/// <returns></returns>
+		private IEnumerable<Movie> _moreMovies() {
+			return new[] {
+                new Movie { 
+                    Title = "Rounders",
+                    ReleaseDate = "1998",
+                    RunningTime = "121 mins",
+                    Actors = new[] {
+                            new Actor("Matt Damon"),
+                            new Actor("Edward Norton"),
+                            new Actor("John Malcovich"),
+                        }
+                },
+                new Movie { 
+                    Title = "Batman",
+                    ReleaseDate = "1989",
+                    RunningTime = "126 mins",
+                    Actors = new[] {
+                            new Actor("Michael Keaton"),
+                            new Actor("Jack Nicholson"),
+                        }
+                },
+            };
+		}
+
         public ActionResult Index()
         {
-			var movies = Movies();
+			var movies = _movies();
             return View(movies);
         }
 
+		/// <summary>
+		/// Should behave as well as Index() but differs in the corresponding views.
+		/// </summary>
+		/// <returns></returns>
 		public ViewResult IndexTyped() {
-			var movies = Movies();
+			var movies = _movies();
+            return View(movies);
+		}
+
+		/// <summary>
+		/// Should behave as well as Index() but differs in the corresponding views.
+		/// </summary>
+		/// <returns></returns>
+		public ViewResult IndexWithCustomWebViewPage() {
+			var movies = _movies();
             return View(movies);
 		}
 
@@ -49,28 +94,7 @@ namespace RazorClientTemplates.Website.Controllers
 
         public ActionResult MoreMovies()
         {
-            var movies = new[] {
-                    new Movie { 
-                        Title = "Rounders",
-                        ReleaseDate = "1998",
-                        RunningTime = "121 mins",
-                        Actors = new[] {
-                                new Actor("Matt Damon"),
-                                new Actor("Edward Norton"),
-                                new Actor("John Malcovich"),
-                            }
-                    },
-                    new Movie { 
-                        Title = "Batman",
-                        ReleaseDate = "1989",
-                        RunningTime = "126 mins",
-                        Actors = new[] {
-                                new Actor("Michael Keaton"),
-                                new Actor("Jack Nicholson"),
-                            }
-                    },
-                };
-            
+			var movies = _moreMovies();
             return Json(movies, JsonRequestBehavior.AllowGet);
         }
     }

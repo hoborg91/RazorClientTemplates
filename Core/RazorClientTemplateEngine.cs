@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Linq;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -101,7 +102,7 @@ namespace RazorClientTemplates
         {
             if(markup == null || markup.Kind != SpanKind.Markup) return false;
 
-			// Treat "@model" keyword.
+			// Treat "@model" and "@inherits" keywords.
 			var markupContent = markup.Content;
 			if (_theRestOfTheLineMustBeTrimmed) {
 				markupContent = TrimModelType(markupContent);
@@ -138,8 +139,8 @@ namespace RazorClientTemplates
         {
             if (code == null || code.Kind != SpanKind.Code) return false;
 
-			// Treat "@model" keyword.
-			if (code.Content == "model") {
+			// Treat "@model" and "@inherits" keywords.
+			if (new[] { "model", "inherits", }.Contains(code.Content)) {
 				_theRestOfTheLineMustBeTrimmed = true;
 				return true;
 			}
