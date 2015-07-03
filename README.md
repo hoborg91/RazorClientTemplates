@@ -7,6 +7,8 @@ In addition to ensuring consistency between the HTML generated on the client wit
 
 ## Installation ##
 
+*NuGet will install the obsolete version (which does not work with MVC4+ properly). If necessary use "Download ZIP" option.*
+
 Install via NuGet!
 
 `PM>  Install-Package RazorClientTemplates`
